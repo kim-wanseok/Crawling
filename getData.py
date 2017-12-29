@@ -5,33 +5,36 @@ import numpy as np
 import pandas as pd
 import xlsxwriter
 from getRealasset import get_naver_realasset
-from getAreaCode import get_code
+from getAreaCode import get_areacode
 
 
-def makeFileName(area_code):
+def get_code(gui, area):
+    df_areacode = get_areacode()
+    gui.progress['value'] = 10
+    area_code = df_areacode[df_areacode['법정동명'].str.contains(area)]
+    gui.progress['value'] = 20
+    return area_code
+
+def makeData(gui, area_code, trade, asset):
     now = datetime.datetime.now()
     area_name = ''
-    if len(area_code.index) <= 1:
-        area_name = area_code.loc[:,'법정동명'].values[0]
-    else:
-        for i in range(len(area_code.index)):
-            area_name = area_name + '_' + area_code.loc[:, '법정동명'].values[i]
-            area = area_code.loc[:, '법정동코드'].values[i-1]
-            print(area)
-    fileName = now.strftime('%Y-%m-%d') + area_name + '.xlsx'
-    return fileName
-
-def makeData(area_code):
+    area = ''
     data = pd.DataFrame()
     length = len(area_code)
     for i in range(length):
-        area = area_code.loc[:, '법정동코드'].values[i]
+        area_nm = area_code.loc[:, '법정동명'].values[i]
+        area_cd = area_code.loc[:, '법정동코드'].values[i]
+        area = area_nm + ' (' + area_cd + ')' + ' [' + str(i+1) + '/' + str(length) + ']'
+        gui.areamsg.set('%s' % (area))
+        area_name = area_name + '_' + area_nm
         for j in range(1,100):
-            df_tmp = get_naver_realasset(area, j)
+            df_tmp = get_naver_realasset(area_cd, trade=trade, hscp=asset, page=j)
             if len(df_tmp) <= 0:
                 break
             data = data.append(df_tmp, ignore_index=True)
-    return data
+        gui.progress['value'] = 20 + 70 * i/length 
+    fileName = now.strftime('%Y-%m-%d') + area_name + '.xlsx'
+    return data, fileName
 
 def saveExcel(gui, folder, filename, content):
     saveFile = folder + '/' + filename
@@ -68,14 +71,15 @@ def saveExcel(gui, folder, filename, content):
     gui.progress['value'] = 100
 
 
-def get_Naver_Data(gui, area, folder):
+def get_Naver_Data(gui, area, trade, asset, folder):
     try:
-        area_code = get_code(area)
-        saveFileName = makeFileName(area_code)
-        gui.stitlemsg.set('%s' % (saveFileName))
-        
-        gui.statusmsg.set('Start Scrawling..')
+        # Display progress bar
+        gui.progress['value'] = 0
+        gui.progress['maximum'] = 100
 
+        # Get information
+        area_code = get_code(gui, area)
+        
         # df.to_excel(saveFileName, sheet_name='Sheet1', header=True)
         # Make directory if there is not directory and valify directory path.
         try:
@@ -84,13 +88,11 @@ def get_Naver_Data(gui, area, folder):
             os.makedirs(folder)
             gui.statusmsg.set('There is not folder. We make a folder.....')
 
-        # Display progress bar
-        gui.progress['value'] = 0
-        gui.progress['maximum'] = 100
-
         # Call back making contents and saving a file using function method.
-        data_file = makeData(area_code)
-        # data_file = pd.DataFrame(np.random.randint(low=0, high=10, size=(5,5)), columns=['a','b','c','d','e'])
+        gui.statusmsg.set('Start Scrawling..')
+        data_file, saveFileName = makeData(gui, area_code, trade, asset)
+        gui.stitlemsg.set('%s' % (saveFileName))
+
         saveExcel(gui, folder, saveFileName, data_file)
 
         if gui.flag:
@@ -100,5 +102,6 @@ def get_Naver_Data(gui, area, folder):
 
     except:
         gui.statusmsg.set('Errors Scrawling')
+        gui.progress.stop()
         return
     

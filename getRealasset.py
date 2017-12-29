@@ -6,7 +6,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 
-def get_naver_realasset(area_code, page=1):
+def get_naver_realasset(area_code, asset='A01', trade='A1', hscp='', page=1):
     '''
     rletTypeCd: A01=아파트, A02=오피스텔, B01=분양권, 주택=C03, 토지=E03, 원룸=C01,
                 상가=D02, 사무실=D01, 공장=E02, 재개발=F01, 건물=D03
@@ -14,10 +14,15 @@ def get_naver_realasset(area_code, page=1):
     hscpTypeCd (매물종류): 아파트=A01, 주상복합=A03, 재건축=A04 (복수 선택 가능)
     cortarNo(법정동코드): (예: 1168010600 서울시, 강남구, 대치동)
     '''
+    if hscp == '':
+        hscp = 'A01%3AA03%3AA04'
+    else:
+        hscp = hscp
+
     url = 'http://land.naver.com/article/articleList.nhn?' \
-        + 'rletTypeCd=A01' \
-        + '&tradeTypeCd=A1' \
-        + '&hscpTypeCd=A01%3AA03%3AA04' \
+        + 'rletTypeCd=' + asset \
+        + '&tradeTypeCd=' + trade \
+        + '&hscpTypeCd=' + hscp \
         + '&cortarNo=' + area_code \
         + '&page=' + str(page)
 
@@ -53,7 +58,7 @@ def get_naver_realasset(area_code, page=1):
         층 = cols[6]
         if cols[7].find('호가일뿐 실거래가로확인된 금액이 아닙니다') >= 0:
             pass  # 단순호가 별도 처리하고자 하면 내용 추가
-        매물가 = int(cols[7].split(' ')[0].replace(',', ''))
+        매물가 = int(cols[7].split(' ')[0].replace(',', ''))  # 월세 data 내 '/' 로 인해 파싱 에러 발생 -> 수정 필요
         연락처 = cols[8]
 
         value_list.append([거래, 종류, 확인일자, 현장확인, 매물명, 공급면적, 전용면적, 층, 매물가, 연락처])
@@ -62,20 +67,3 @@ def get_naver_realasset(area_code, page=1):
             '공급면적', '전용면적', '층', '매물가', '연락처']
     df = pd.DataFrame(value_list, columns=cols)
     return df
-
-
-# if __name__ == "__main__":
-#     area_code = '1159010500' # 동작구, 흑석동
-
-#     df = pd.DataFrame()
-#     for i in range(1,100):
-#         df_tmp = get_naver_realasset(area_code, i)
-#         if len(df_tmp) <=0:
-#             break
-#         df = df.append(df_tmp, ignore_index=True)
-
-#     savefile = './save/naver_test.xlsx'
-#     # writer = pd.ExcelWriter(savefile)
-#     df.to_excel(savefile, sheet_name='Sheet1', header=True)
-
-#     print(df)

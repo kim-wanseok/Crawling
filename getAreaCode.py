@@ -15,7 +15,3 @@ def get_province():
         '\d{2}0{8}|36110{6}')]
     return df_province
 
-def get_code(area):
-    df_areacode = get_areacode()
-    area_code = df_areacode[df_areacode['법정동명'].str.contains(area)]
-    return area_code
