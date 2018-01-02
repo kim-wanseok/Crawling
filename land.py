@@ -51,7 +51,7 @@ class MyLand():
 
         # Create Logo
         try:
-            MY_LOGO = ImageTk.PhotoImage(Image.open('./resources/converter.jpg'))
+            MY_LOGO = ImageTk.PhotoImage(Image.open('./resources/logo.jpg'))
         except:
             pass
 
