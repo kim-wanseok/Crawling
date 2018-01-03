@@ -35,7 +35,7 @@ if __name__ == '__main__':
     # print(asset)
     area = '흑석동'
 
-    area_code = get_code(area)
+    area_code = get_code(obj, area)
     print(area_code)
 
     data, filename = makeData(obj, area_code, trade, asset)
