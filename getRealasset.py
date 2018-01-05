@@ -58,7 +58,10 @@ def get_naver_realasset(area_code, asset='A01', trade='A1', hscp='', page=1):
         층 = cols[6]
         if cols[7].find('호가일뿐 실거래가로확인된 금액이 아닙니다') >= 0:
             pass  # 단순호가 별도 처리하고자 하면 내용 추가
-        매물가 = int(cols[7].split(' ')[0].replace(',', ''))  # 월세 data 내 '/' 로 인해 파싱 에러 발생 -> 수정 필요
+        try:
+            매물가 = int(cols[7].split(' ')[0].replace(',', ''))  # 월세 data 내 '/' 로 인해 int 로 인식 불가
+        except ValueError:
+            매물가 = str(cols[7].split(' ')[0].replace(',', ''))  # 월세 data 문자열로 인식
         연락처 = cols[8]
 
         value_list.append([거래, 종류, 확인일자, 현장확인, 매물명, 공급면적, 전용면적, 층, 매물가, 연락처])
