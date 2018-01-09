@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 import xlsxwriter
+import time
 from getRealasset import get_naver_realasset
 from getAreaCode import get_areacode
 
@@ -27,12 +28,14 @@ def makeData(gui, area_code, trade, asset):
         area = area_nm + ' (' + area_cd + ')' + ' [' + str(i+1) + '/' + str(length) + ']'
         gui.areamsg.set('%s' % (area))
         area_name = area_name + '_' + area_nm
-        for j in range(1,100):
+        for j in range(1,200):
+            time.sleep(5)
             df_tmp = get_naver_realasset(area_cd, trade=trade, hscp=asset, page=j)
             if len(df_tmp) <= 0:
                 break
             data = data.append(df_tmp, ignore_index=True)
-        gui.progress['value'] = 20 + 70 * i/length 
+            gui.progress['value'] = 20 + 70 * i+1/length * j/150
+        gui.progress['value'] = 20 + 70 * i+1 / length
     fileName = now.strftime('%Y-%m-%d') + area_name + '.xlsx'
     return data, fileName
 
